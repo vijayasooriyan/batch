@@ -1,0 +1,526 @@
+import java.util.Scanner;
+
+public class PlayfairCipher {
+
+    private static final int SIZE = 5;
+
+    private static char[][] generateSquare(String key) {
+        char[][] square = new char[SIZE][SIZE];
+        boolean[] used = new boolean[26];
+        key = key.toUpperCase().replaceAll("[^A-Z]", "").replace('J', 'I');
+        int row = 0, col = 0;
+        for (char ch : key.toCharArray()) {
+            if (!used [ch - 'A']) {
+                square[row][col++] = ch;
+                used[ch - 'A'] = true;
+                if (col == SIZE) { col = 0; row++; }
+            }
+        }
+        for (char ch = 'A'; ch <= 'Z'; ch++) {
+            if (ch != 'J' && !used[ch - 'A']) {
+                square[row][col++] = ch;
+                if (col == SIZE) { col = 0; row++; }
+            }
+        }
+        return square;
+    }
+
+    private static void findPos(char[][] sq, char c, int[] pos) {
+        for (int i = 0; i < SIZE; i++)
+            for (int j = 0; j < SIZE; j++)
+                if (sq[i][j] == c) { pos[0] = i; pos[1] = j; return; }
+    }
+
+    private static String formatText(String text) {
+        text = text.toUpperCase().replaceAll("[^A-Z]", "").replace('J', 'I');
+        StringBuilder sb = new StringBuilder(text);
+        for (int i = 0; i < sb.length() - 1; i += 2)
+            if (sb.charAt(i) == sb.charAt(i + 1)) sb.insert(i + 1, 'X');
+        if (sb.length() % 2 != 0) sb.append('X');
+        return sb.toString();
+    }
+
+    public static String encrypt(String plaintext, String key) {
+        char[][] sq = generateSquare(key);
+        String text = formatText(plaintext);
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < text.length(); i += 2) {
+            char a = text.charAt(i), b = text.charAt(i + 1);
+            int[] p1 = new int[2], p2 = new int[2];
+            findPos(sq, a, p1); findPos(sq, b, p2);
+            if (p1[0] == p2[0]) {
+                result.append(sq[p1[0]][(p1[1] + 1) % SIZE]);
+                result.append(sq[p2[0]][(p2[1] + 1) % SIZE]);
+            } else if (p1[1] == p2[1]) {
+                result.append(sq[(p1[0] + 1) % SIZE][p1[1]]);
+                result.append(sq[(p2[0] + 1) % SIZE][p2[1]]);
+            } else {
+                result.append(sq[p1[0]][p2[1]]);
+                result.append(sq[p2[0]][p1[1]]);
+            }
+        }
+        return result.toString();
+    }
+
+    public static String decrypt(String ciphertext, String key) {
+        char[][] sq = generateSquare(key);
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < ciphertext.length(); i += 2) {
+            char a = ciphertext.charAt(i), b = ciphertext.charAt(i + 1);
+            int[] p1 = new int[2], p2 = new int[2];
+            findPos(sq, a, p1); findPos(sq, b, p2);
+            if (p1[0] == p2[0]) {
+                result.append(sq[p1[0]][(p1[1] - 1 + SIZE) % SIZE]);
+                result.append(sq[p2[0]][(p2[1] - 1 + SIZE) % SIZE]);
+            } else if (p1[1] == p2[1]) {
+                result.append(sq[(p1[0] - 1 + SIZE) % SIZE][p1[1]]);
+                result.append(sq[(p2[0] - 1 + SIZE) % SIZE][p2[1]]);
+            } else {
+                result.append(sq[p1[0]][p2[1]]);
+                result.append(sq[p2[0]][p1[1]]);
+            }
+        }
+        return result.toString();
+    }
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        System.out.print("Enter plaintext: ");
+        String plaintext = sc.nextLine();
+        System.out.print("Enter key: ");
+        String key = sc.nextLine();
+
+        String encrypted = encrypt(plaintext, key);
+        String decrypted = decrypt(encrypted, key);
+
+        System.out.println("\nEncrypted: " + encrypted);
+        System.out.println("Decrypted: " + decrypted);
+        sc.close();
+    }
+}
+==========================================================================================
+==========================================================================================
+
+
+
+
+
+
+import  java.util.Scanner;
+public class RailFenceCipher {
+
+    public static String encrypt(String plaintext, int rails) {
+        char[][] railMatrix = new char[rails][plaintext.length()];
+        boolean down = false;
+        int row = 0, col = 0;
+
+        // Initialize matrix
+        for (int i = 0; i < rails; i++) {
+            for (int j = 0; j < plaintext.length(); j++) {
+                railMatrix[i][j] = '\0';
+            }
+        }
+
+        // Fill zig-zag pattern
+        for (char ch : plaintext.toCharArray()) {
+            railMatrix[row][col] = ch;
+
+            if (row == 0 || row == rails - 1) {
+                down = !down;
+            }
+
+            if (down)
+				row++;
+            else 
+				row--;
+
+            col++;
+        }
+
+        // Read row-wise to form ciphertext
+        StringBuilder ciphertext = new StringBuilder();
+        for (int i = 0; i < rails; i++) {
+            for (int j = 0; j < plaintext.length(); j++) {
+                if (railMatrix[i][j] != '\0') {
+                    ciphertext.append(railMatrix[i][j]);
+                }
+            }
+        }
+
+        return ciphertext.toString();
+    }
+
+
+    public static String decrypt(String ciphertext, int rails) {
+        char[][] railMatrix = new char[rails][ciphertext.length()];
+        boolean down = false;
+        int row = 0, col = 0;
+
+        // Initialize matrix
+        for (int i = 0; i < rails; i++) {
+            for (int j = 0; j < ciphertext.length(); j++) {
+                railMatrix[i][j] = '\0';
+            }
+        }
+
+        // Mark zig-zag pattern with '*'
+        for (int i = 0; i < ciphertext.length(); i++) {
+
+            railMatrix[row][col] = '*';
+
+            if (row == 0 || row == rails - 1) {
+                down = !down;
+            }
+
+            if (down)
+				row++;
+            else
+                row--;
+
+            col++;
+        }
+
+        // Fill ciphertext characters in marked positions
+        int index = 0;
+        for (int i = 0; i < rails; i++) {
+            for (int j = 0; j < ciphertext.length(); j++) {
+                if (railMatrix[i][j] == '*') {
+                    railMatrix[i][j] = ciphertext.charAt(index++);
+                }
+            }
+        }
+
+        // Read matrix in zig-zag pattern
+        StringBuilder plaintext = new StringBuilder();
+        row = 0;
+        col = 0;
+        down = false;   // IMPORTANT FIX
+
+        for (int i = 0; i < ciphertext.length(); i++) {
+
+            plaintext.append(railMatrix[row][col]);
+
+            if (row == 0 || row == rails - 1) {
+                down = !down;
+            }
+
+            if (down) row++;
+            else row--;
+
+            col++;
+        }
+
+        return plaintext.toString();
+    }
+
+
+
+
+    public static void main(String[] args) {
+		Scanner sc = new Scanner(System.in);
+		
+		System.out.println("Enter the Plaintext here : ");
+		String pt = sc.nextLine();
+		
+		System.out.println("Enter the Rails here : ");
+		int rails = sc.nextInt();
+		
+
+        String encryptedText = encrypt(pt, rails);
+        String decryptedText = decrypt(encryptedText, rails);
+
+        System.out.println("Plaintext: " + pt);
+        System.out.println("Rails: " + rails);
+        System.out.println("Encrypted: " + encryptedText);
+        System.out.println("Decrypted: " + decryptedText);
+    }
+}
+
+
+
+
+=====================================================================
+
+
+
+
+
+
+
+import java.util.*;
+
+public class ColumnarTranspositionCipher {
+
+    public static String encrypt(String text, String key) {
+        text = text.replaceAll("\\s+", "").toUpperCase();
+        key = key.toUpperCase();
+
+        final String finalKey = key;   // FIX
+
+        int col = finalKey.length();
+        int row = (int) Math.ceil((double) text.length() / col);
+
+        char[][] grid = new char[row][col];
+
+        int k = 0;
+        for (int i = 0; i < row; i++) {
+            for (int j = 0; j < col; j++) {
+                grid[i][j] = (k < text.length()) ? text.charAt(k++) : 'X';
+            }
+        }
+
+        Integer[] order = new Integer[col];
+        for (int i = 0; i < col; i++) order[i] = i;
+
+        Arrays.sort(order, new Comparator<Integer>() {
+            public int compare(Integer a, Integer b) {
+                return Character.compare(finalKey.charAt(a), finalKey.charAt(b));
+            }
+        });
+
+        StringBuilder cipher = new StringBuilder();
+        for (int j : order) {
+            for (int i = 0; i < row; i++) {
+                cipher.append(grid[i][j]);
+            }
+        }
+
+        return cipher.toString();
+    }
+
+
+    public static String decrypt(String cipher, String key) {
+        key = key.toUpperCase();
+        final String finalKey = key;   // FIX
+
+        int col = finalKey.length();
+        int row = (int) Math.ceil((double) cipher.length() / col);
+
+        char[][] grid = new char[row][col];
+
+        Integer[] order = new Integer[col];
+        for (int i = 0; i < col; i++) order[i] = i;
+
+        Arrays.sort(order, new Comparator<Integer>() {
+            public int compare(Integer a, Integer b) {
+                return Character.compare(finalKey.charAt(a), finalKey.charAt(b));
+            }
+        });
+
+        int k = 0;
+        for (int j : order) {
+            for (int i = 0; i < row; i++) {
+                grid[i][j] = cipher.charAt(k++);
+            }
+        }
+
+        StringBuilder text = new StringBuilder();
+        for (int i = 0; i < row; i++) {
+            for (int j = 0; j < col; j++) {
+                text.append(grid[i][j]);
+            }
+        }
+
+        return text.toString().replaceAll("X+$", "");
+    }
+
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter plaintext: ");
+        String text = sc.nextLine();
+
+        System.out.print("Enter key: ");
+        String key = sc.nextLine();
+
+        String encrypted = encrypt(text, key);
+        String decrypted = decrypt(encrypted, key);
+
+        System.out.println("\nEncrypted: " + encrypted);
+        System.out.println("Decrypted: " + decrypted);
+
+        sc.close();
+    }
+}
+
+
+
+=====================================================================================
+
+
+
+
+import java.util.Scanner;
+import java.util.Base64;
+
+public class OTP{
+	
+	public static String encrypt(String plaintext,String key){
+		StringBuilder cipherText = new StringBuilder();
+		for(int i=0;i<plaintext.length();i++){
+			char ch = plaintext.charAt(i);
+			char encryptedChar = (char) (ch ^ key.charAt(i));
+			cipherText.append(encryptedChar);
+		}
+		return cipherText.toString();
+	}
+	
+	public static String decrypt(String cipherText, String key){ 
+		return encrypt(cipherText,key);
+	}
+	
+	public static void main(String[] args){
+		Scanner sc = new Scanner(System.in);
+		System.out.println("Enter the plain Text here : ");
+		String pt = sc.nextLine();
+		
+		System.out.println("Enter the key here (Same length of the plain text) : ");
+		String key = sc.nextLine();
+		
+		if(pt.length() != key.length()) {
+			System.out.println("Error : The length of the Plain text and key should be same ");
+			return;
+		}
+		
+		String encrypted = encrypt(pt, key);
+		String decrypted = decrypt(encrypted,key);
+		
+		String encryptedBase64 = Base64.getEncoder().encodeToString(encrypted.getBytes());
+		
+		System.out.println("Plain Text : "+pt);
+		System.out.println("Key is : "+key);
+		System.out.println("Encrypted Text is : "+encryptedBase64);
+		System.out.println("Decrypted Text is : "+decrypted);
+		sc.close();
+	}
+}
+
+
+==============================================================================================
+
+
+
+public class RSA {
+
+    // Function to compute modular exponentiation (a^b mod m)
+    private static long modPow(long a, long b, long m) {
+        long result = 1;
+        a %= m;
+
+        while (b > 0) {
+            if ((b & 1) == 1) {
+                result = (result * a) % m;
+            }
+            b >>= 1;
+            a = (a * a) % m;
+        }
+
+        return result;
+    }
+
+    // Function to encrypt the plaintext using the public key (e, n)
+    public static long encrypt(long plaintext, long e, long n) {
+        return modPow(plaintext, e, n);
+    }
+
+    // Function to decrypt the ciphertext using the private key (d, n)
+    public static long decrypt(long ciphertext, long d, long n) {
+        return modPow(ciphertext, d, n);
+    }
+
+    public static void main(String[] args) {
+        // Key Generation (Replace these values with your own keys for a real implementation)
+        long p = 61; // Prime number 1
+        long q = 53; // Prime number 2
+        long n = p * q;
+        long phi = (p - 1) * (q - 1);
+        long e = 17; // Public exponent (commonly chosen value)
+        long d = 2753; // Private exponent (calculated using Extended Euclidean Algorithm)
+
+        // Encryption and Decryption
+        long plaintext = "Surya";
+        long ciphertext = encrypt(plaintext, e, n);
+        long decryptedText = decrypt(ciphertext, d, n);
+
+        System.out.println("Plaintext: " + plaintext);
+        System.out.println("Ciphertext: " + ciphertext);
+        System.out.println("Decrypted: " + decryptedText);
+    }
+}
+
+
+==========================================================================================
+
+
+
+
+
+import java.util.Scanner;
+
+public class Polyalphabetic{
+    public static String encrypt(String plaintext, String key){
+		plaintext = plaintext.toUpperCase();
+		key = key.toUpperCase();
+		StringBuilder cipherText = new StringBuilder();
+		
+		for(int i=0;i<plaintext.length();i++){
+			char p = plaintext.charAt(i);
+			if(Character.isLetter(p)){
+				char k = key.charAt(i%key.length());
+				int c = ((p - 'A') + (k - 'A')) % 26;
+                cipherText.append((char)(c+ 'A'));
+			} else {
+				cipherText.append(p);
+			}
+		}
+		return cipherText.toString();
+	}
+	
+	
+	public static String decrypt(String cipherText, String key){
+		cipherText = cipherText.toUpperCase();
+		key = key.toUpperCase();
+		StringBuilder plainText = new StringBuilder();
+		
+		for(int i=0;i<cipherText.length();i++){
+			char p = cipherText.charAt(i);
+			if(Character.isLetter(p)){
+				char k = key.charAt(i%key.length());
+				int val = ((p - 'A')-(k - 'A') +26) %26; 
+				plainText.append((char)(val+ 'A'));
+			} else {
+				plainText.append(p);
+			}
+		}
+		return plainText.toString();
+	}
+	
+	
+	public static void main(String[] arg){
+		Scanner sc = new Scanner(System.in);
+		System.out.println("Enter the plain text here ! ");
+		String pt = sc.nextLine();
+		
+		System.out.println("Enter the key here ! ");
+		String key = sc.nextLine();
+		
+		String encrypted = encrypt(pt, key);
+		String decrypted = decrypt(encrypted,key);
+		
+		System.out.println("Plaintext  : " + pt);
+		
+        System.out.println("Key        : " + key);
+		
+		System.out.println("Encrypted  : " + encrypted);
+		System.out.println("Decrypted  : " + decrypted);
+		
+		sc.close();
+	}
+}
+
+
+
+
+
+
